@@ -35,13 +35,15 @@ class MainActivity : AppCompatActivity() {
                 TestAdapter.OnClickEvents.DeleteClick ->{
                     Toast.makeText(this, "Deleted!", Toast.LENGTH_LONG).show()
                 }
-                TestAdapter.OnClickEvents.OnItemClicked -> {
-                    Toast.makeText(this,"Item Clicked",Toast.LENGTH_SHORT).show()
+                is TestAdapter.OnClickEvents.OnItemClicked -> {
+                    Toast.makeText(this,"Item Clicked ${onClickEvents.position + 1}",Toast.LENGTH_SHORT).show()
                 }
             }
         }
+        myAdapter.setHasStableIds(false)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = myAdapter
+
     }
 
 }

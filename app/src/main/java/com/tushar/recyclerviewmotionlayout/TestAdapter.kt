@@ -1,20 +1,23 @@
 package com.tushar.recyclerviewmotionlayout
 
 import android.annotation.SuppressLint
+import android.util.SparseBooleanArray
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.recyclerview.widget.RecyclerView
 
+
+@SuppressLint("ClickableViewAccessibility")
 class TestAdapter(private val list: List<String>, val onClick: (OnClickEvents) -> Unit) :
     RecyclerView.Adapter<TestAdapter.MyViewHolder>() {
 
     private var lastSlidedItem: View? = null
+    private val itemStateArray = SparseBooleanArray()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.row_item, parent, false))
@@ -32,13 +35,18 @@ class TestAdapter(private val list: List<String>, val onClick: (OnClickEvents) -
         private val pin: ImageView = item.findViewById(R.id.pin)
         private val delete: ImageView = item.findViewById(R.id.delete)
 
-        @SuppressLint("ClickableViewAccessibility")
         fun bind(position: Int) {
             val str = list[position]
 
             tv.text = str
 
-            (item as MotionLayout).addTransitionListener(object : MotionLayout.TransitionListener {
+            if (!itemStateArray.get(position, false)) {
+                (item as MotionLayout).transitionToStart()
+            } else {
+                (item as MotionLayout).transitionToEnd()
+            }
+
+            item.addTransitionListener(object : MotionLayout.TransitionListener {
                 override fun onTransitionTrigger(
                     p0: MotionLayout?,
                     p1: Int,
@@ -61,15 +69,18 @@ class TestAdapter(private val list: List<String>, val onClick: (OnClickEvents) -
                 override fun onTransitionCompleted(motionLayout: MotionLayout?, p1: Int) {
                     if(lastSlidedItem == null && motionLayout?.progress!! == 1.0f){
                         lastSlidedItem = item
+                        itemStateArray.put(position, true)
+                    }else{
+                        itemStateArray.put(position, false)
                     }
                 }
 
             })
 
-            item.setOnTouchListener { v, event ->
+            item.setOnTouchListener { _, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     if (item.progress == 0.0f){
-                        onClick.invoke(OnClickEvents.OnItemClicked)
+                        onClick.invoke(OnClickEvents.OnItemClicked(position))
                     }
                 }
                 false
@@ -96,6 +107,6 @@ class TestAdapter(private val list: List<String>, val onClick: (OnClickEvents) -
         object MuteClick : OnClickEvents()
         object PinClick: OnClickEvents()
         object DeleteClick : OnClickEvents()
-        object OnItemClicked : OnClickEvents()
+        data class OnItemClicked(val position: Int) : OnClickEvents()
     }
 }
